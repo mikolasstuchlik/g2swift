@@ -9,9 +9,11 @@ public enum Foo {
         #endif
 
         #if DIAGNOSTIC
-        print("ColA  \(PropertyScanner.a)")
-        print("ColE \(PropertyScanner.e)")
+        var all = PropertyScanner()
+        for item in PropertyScanner.responses {
+            all.merge(item)
+        }
+        print(all.pretty)
         #endif
-        //print(resp2.entities.filter { $0.kind.contains("typealias")} )
     }
 }
