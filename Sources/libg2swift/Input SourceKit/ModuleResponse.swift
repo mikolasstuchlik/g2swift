@@ -4,22 +4,6 @@ import Foundation
 // MARK: - Representation
 // reference: https://github.com/apple/swift/blob/main/tools/SourceKit/docs/Protocol.md#response-2
 
-
-struct Col {
-    static var a = Col ()
-    static var e = Col ()
-
-    mutating func put<T: Sequence>(_ val: T) where T.Element == String {
-        keys.formUnion(val)
-
-        nonOpt = nonOpt ?? Set(val)
-        nonOpt?.formIntersection(val)
-    }
-
-    var keys = Set<String>() 
-    var nonOpt: Set<String>?
-}
-
 // linux
 // Col(
 //     keys: Set(["key.offset", "key.length", "key.name", "key.usr", "key.kind"]), 
@@ -32,37 +16,26 @@ struct Col {
 //     nonOpt: Optional(Set(["key.offset", "key.kind", "key.length"]))
 // )
 //
-struct Annotation {
+struct Annotation: SKInitializable {
 
     /// UID for the declaration kind (function, class, etc.).
-    let kind: String
+    @SKValue(key: "key.kind") var kind: String
     /// Location of the annotated token.
-    let offset: Int64
+    @SKValue(key: "key.offset") var offset: Int64
     /// Length of the annotated token.
-    let length: Int64
+    @SKValue(key: "key.length") var length: Int64
 
-    init(skRepresentable: SourceKitRepresentable) throws {
-        guard let response = skRepresentable as? [String: SourceKitRepresentable] else {
-            throw ModuleResponse.Error.valueMissingOrMismatch(forKey: nil)
+    init(from skRepresentable: SourceKitRepresentable) throws {
+        guard let object = skRepresentable as? [String: SourceKitRepresentable] else {
+            throw SourceKitError.valueMissingOrNotAnObject
         }
+        try _kind.get(from: object)
+        try _offset.get(from: object)
+        try _length.get(from: object)
 
-        Col.a.put(response.keys)
-
-        guard let kind = response["key.kind"] as? String else {
-            throw ModuleResponse.Error.valueMissingOrMismatch(forKey: "key.kind")
-        }
-        self.kind = kind
-
-        guard let offset = response["key.offset"] as? Int64 else {
-            throw ModuleResponse.Error.valueMissingOrMismatch(forKey: "key.offset")
-        }
-        self.offset = offset
-
-        guard let length = response["key.length"] as? Int64 else {
-            throw ModuleResponse.Error.valueMissingOrMismatch(forKey: "key.length")
-        }
-        self.length = length
-        
+        #if DIAGNOSTIC
+        PropertyScanner.a.put(object.map { "\($0) \(String(describing: type(of: $1)))" })
+        #endif
     }
 }
 
@@ -77,76 +50,51 @@ struct Annotation {
 //     keys: Set(["key.modulename", "key.usr", "key.keyword", "key.attributes", "key.extends", "key.name", "key.offset", "key.generic_requirements", "key.is_deprecated", "key.is_optional", "key.doc.full_as_xml", "key.inherits", "key.kind", "key.default_implementation_of", "key.fully_annotated_decl", "key.conforms", "key.is_async", "key.length", "key.is_unavailable", "key.entities", "key.original_usr", "key.generic_params"]),
 //     nonOpt: Optional(Set(["key.length", "key.offset", "key.kind"]))
 // )
-struct Entity {
+struct Entity: SKInitializable {
     /// UID for the declaration or reference kind (function, class, etc.).
-    let kind: String
+    @SKValue(key: "key.kind") var kind: String
     /// Displayed name for the entity.
-    let name: String?
+    @SKValue(key: "key.name") var name: String?
     /// USR string for the entity.
-    let usr: String?
+    @SKValue(key: "key.usr") var usr: String?
     /// Location of the entity.
-    let offset: Int64
+    @SKValue(key: "key.offset") var offset: Int64
     /// Length of the entity.
-    let length: Int64
+    @SKValue(key: "key.length") var length: Int64
     /// XML representing the entity, its USR, etc.
-    let fulltAnnotatedDeclaration: String?
+    @SKValue(key: "key.fully_annotated_decl") var fulltAnnotatedDeclaration: String?
     /// XML representing the entity and its documentation. Only present
     /// when the entity is documented.
-    let docAsXml: String?
+    @SKValue(key: "key.doc.full_as_xml") var docAsXml: String?
     /// One or more entities contained in the particular entity (sub-classes, references, etc.).
-    let entities: [Entity]
+    @SKValue(key: "key.entities") var entities: [Entity]?
 
-    init(skRepresentable: SourceKitRepresentable) throws {
-        guard let response = skRepresentable as? [String: SourceKitRepresentable] else {
-            throw ModuleResponse.Error.valueMissingOrMismatch(forKey: nil)
+    init(from skRepresentable: SourceKitRepresentable) throws {
+        guard let object = skRepresentable as? [String: SourceKitRepresentable] else {
+            throw SourceKitError.valueMissingOrNotAnObject
         }
+        try _kind.get(from: object)
+        try _name.getOptional(from: object)
+        try _usr.getOptional(from: object)
+        try _offset.get(from: object)
+        try _length.get(from: object)
+        try _fulltAnnotatedDeclaration.getOptional(from: object)
+        try _docAsXml.getOptional(from: object)
+        try _entities.getOptional(from: object)
 
-        Col.e.put(response.keys)
-
-        guard let kind = response["key.kind"] as? String else {
-            throw ModuleResponse.Error.valueMissingOrMismatch(forKey: "key.kind")
-        }
-        self.kind = kind
-
-        self.name = response["key.name"] as? String
-
-        self.usr = response["key.usr"] as? String
-
-        guard let offset = response["key.offset"] as? Int64 else {
-            throw ModuleResponse.Error.valueMissingOrMismatch(forKey: "key.offset")
-        }
-        self.offset = offset
-
-        guard let length = response["key.length"] as? Int64 else {
-            throw ModuleResponse.Error.valueMissingOrMismatch(forKey: "key.length")
-        }
-        self.length = length
-
-        self.fulltAnnotatedDeclaration = response["key.fully_annotated_decl"] as? String
-
-        self.docAsXml = response["key.doc.full_as_xml"] as? String
-        self.entities = try (response["key.entities"] as? [SourceKitRepresentable])?.map(Entity.init(skRepresentable:)) ?? []
+        #if DIAGNOSTIC
+        PropertyScanner.e.put(object.map { "\($0) \(String(describing: type(of: $1)))" })
+        #endif
     }
 }
 
 final class ModuleResponse {
 
-    enum Error: Swift.Error {
-        case valueMissingOrMismatch(forKey: String?)
-    }
-
-    let annotations: [Annotation]
-    let entities: [Entity]
+    @SKValue(key: "key.annotations") var annotations: [Annotation]
+    @SKValue(key: "key.entities") var entities: [Entity]
 
     init(response: [String : SourceKitRepresentable]) throws {
-        guard let annotations = response["key.annotations"] as? [SourceKitRepresentable] else {
-            throw Error.valueMissingOrMismatch(forKey: "key.annotations")
-        }
-        self.annotations = try annotations.map(Annotation.init(skRepresentable:))
-
-        guard let entities = response["key.entities"] as? [SourceKitRepresentable] else {
-            throw Error.valueMissingOrMismatch(forKey: "key.entities")
-        }
-        self.entities = try entities.map(Entity.init(skRepresentable:))
+        try _annotations.get(from: response)
+        try _entities.get(from: response)
     }
 }

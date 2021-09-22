@@ -10,7 +10,7 @@ final class SourceKitDriver {
     }
 
     static func request(for source: Source) throws -> ModuleResponse {
-        var arguments: [String]
+        var arguments: [String] = []
 
         #if os(macOS)
         let commands = [

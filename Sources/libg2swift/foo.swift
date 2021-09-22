@@ -7,7 +7,11 @@ public enum Foo {
         #else
         let resp3 = try! SourceKitDriver.request(for: .darwin)
         #endif
-        print("ColA  \(Col.a)")
-        print("ColE \(Col.e)")
+
+        #if DIAGNOSTIC
+        print("ColA  \(PropertyScanner.a)")
+        print("ColE \(PropertyScanner.e)")
+        #endif
+        //print(resp2.entities.filter { $0.kind.contains("typealias")} )
     }
 }

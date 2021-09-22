@@ -18,6 +18,9 @@ let package = Package(
             name: "libg2swift",
             dependencies: [
                 .product(name: "SourceKittenFramework", package: "SourceKitten")
+            ],
+            swiftSettings: [
+                .define("DIAGNOSTIC")
             ]
         ),
         .executableTarget(
