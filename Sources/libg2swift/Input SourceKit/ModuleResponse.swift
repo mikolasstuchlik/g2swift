@@ -20,10 +20,18 @@ struct Col {
     var nonOpt: Set<String>?
 }
 
+// linux
 // Col(
 //     keys: Set(["key.offset", "key.length", "key.name", "key.usr", "key.kind"]), 
 //     nonOpt: Optional(Set(["key.offset", "key.kind", "key.length"]))
 // )
+//
+// macOS
+// Col(
+//     keys: Set(["key.usr", "key.name", "key.length", "key.offset", "key.kind"]),
+//     nonOpt: Optional(Set(["key.offset", "key.kind", "key.length"]))
+// )
+//
 struct Annotation {
 
     /// UID for the declaration kind (function, class, etc.).
@@ -58,9 +66,16 @@ struct Annotation {
     }
 }
 
+// linux
 // Col(
 //     keys: Set(["key.is_deprecated", "key.doc.full_as_xml", "key.conforms", "key.original_usr", "key.attributes", "key.keyword", "key.offset", "key.extends", "key.is_unavailable", "key.entities", "key.usr", "key.generic_params", "key.default_implementation_of", "key.length", "key.kind", "key.name", "key.inherits", "key.generic_requirements", "key.fully_annotated_decl"]), 
 //     nonOpt: Optional(Set(["key.length", "key.kind", "key.offset"]))
+// )
+//
+// macOS
+// Col(
+//     keys: Set(["key.modulename", "key.usr", "key.keyword", "key.attributes", "key.extends", "key.name", "key.offset", "key.generic_requirements", "key.is_deprecated", "key.is_optional", "key.doc.full_as_xml", "key.inherits", "key.kind", "key.default_implementation_of", "key.fully_annotated_decl", "key.conforms", "key.is_async", "key.length", "key.is_unavailable", "key.entities", "key.original_usr", "key.generic_params"]),
+//     nonOpt: Optional(Set(["key.length", "key.offset", "key.kind"]))
 // )
 struct Entity {
     /// UID for the declaration or reference kind (function, class, etc.).
