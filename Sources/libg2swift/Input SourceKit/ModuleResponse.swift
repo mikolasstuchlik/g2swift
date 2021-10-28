@@ -4,7 +4,7 @@ import Foundation
 // MARK: - Representation
 // reference: https://github.com/apple/swift/blob/main/tools/SourceKit/docs/Protocol.md#response-2
 
-struct Annotation: SKInitializable {
+struct Annotation: SKObject {
 
     /// UID for the declaration kind (function, class, etc.).
     @SKValue(key: "key.kind") var kind: String
@@ -16,19 +16,12 @@ struct Annotation: SKInitializable {
     @SKValue(key: "key.usr") var usr: String?
     @SKValue(key: "key.name") var name: String?
 
-    init(from skRepresentable: SourceKitRepresentable) throws {
-        guard let object = skRepresentable as? [String: SourceKitRepresentable] else {
-            throw SourceKitError.valueMissingOrNotAnObject
-        }
-        try _kind.get(from: object)
-        try _offset.get(from: object)
-        try _length.get(from: object)
-        try _usr.get(from: object)
-        try _usr.get(from: object)
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        try self.load(from: skRepresentable!)
     }
 }
 
-struct Entity: SKInitializable {
+struct Entity: SKObject {
     /// UID for the declaration or reference kind (function, class, etc.).
     @SKValue(key: "key.kind") var kind: String
     /// Displayed name for the entity.
@@ -47,32 +40,23 @@ struct Entity: SKInitializable {
     /// One or more entities contained in the particular entity (sub-classes, references, etc.).
     @SKValue(key: "key.entities") var entities: [Entity]?
 
-    init(from skRepresentable: SourceKitRepresentable) throws {
-        guard let object = skRepresentable as? [String: SourceKitRepresentable] else {
-            throw SourceKitError.valueMissingOrNotAnObject
-        }
-        try _kind.get(from: object)
-        try _name.get(from: object)
-        try _usr.get(from: object)
-        try _offset.get(from: object)
-        try _length.get(from: object)
-        try _fulltAnnotatedDeclaration.get(from: object)
-        try _docAsXml.get(from: object)
-        try _entities.get(from: object)
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        try self.load(from: skRepresentable!)
     }
 }
 
-final class ModuleResponse {
+final class ModuleResponse: SKObject {
 
     @SKValue(key: "key.annotations") var annotations: [Annotation]
     @SKValue(key: "key.entities") var entities: [Entity]
 
-    init(response: [String : SourceKitRepresentable]) throws {
-        try _annotations.get(from: response)
-        try _entities.get(from: response)
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        var aSelf = self
+        try aSelf.load(from: skRepresentable!)
 
         #if DIAGNOSTIC
-        PropertyScanner.responses.append(PropertyScanner.initialize(from: response))
+        PropertyScanner.responses.append(PropertyScanner.initialize(from: skRepresentable as! [String: SourceKitRepresentable]))
         #endif
     }
+
 }

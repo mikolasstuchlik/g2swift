@@ -27,7 +27,7 @@ final class SourceKitDriver {
         ]
         #endif
 
-        return try ModuleResponse(response: 
+        return try ModuleResponse(from: 
             try SourceKittenFramework.Request.moduleInfo(module: source.rawValue, arguments: arguments).send()
         )
     }

@@ -1,4 +1,5 @@
 import SourceKittenFramework
+import struct Foundation.Data
 
 enum SourceKitError: Error {
     case valueMissingOrMismatch(forKey: String?)
@@ -6,17 +7,69 @@ enum SourceKitError: Error {
 }
 
 protocol SKInitializable {
-    init(from skRepresentable: SourceKitRepresentable) throws
+    init(from skRepresentable: SourceKitRepresentable?) throws
 }
 
-extension SKInitializable {
-    func load(from skRepresentable: SourceKitRepresentable) throws {
+protocol SKObject: SKInitializable { }
+extension SKObject {
+    mutating func load(from skRepresentable: SourceKitRepresentable) throws {
+        guard let object = skRepresentable as? [String: SourceKitRepresentable] else {
+            throw SourceKitError.valueMissingOrNotAnObject
+        }
         let mirror = Mirror(reflecting: self)
+        try mirror.children.forEach { child in
+            try (child.value as? SKObjectContainer)?.load(from: object)
+        }
     }
 }
 
+extension String: SKInitializable {
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        self = skRepresentable as! String
+    }
+}
+
+extension Int64: SKInitializable {
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        self = skRepresentable as! Int64
+    }
+}
+
+extension Int: SKInitializable {
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        self = Int(skRepresentable as! Int64)
+    }
+}
+
+extension Bool: SKInitializable {
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        self = skRepresentable as! Bool
+    }
+}
+
+extension Data: SKInitializable {
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        self = skRepresentable as! Data
+    }
+}
+extension Optional: SKInitializable where Wrapped: SKInitializable {
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        self = try skRepresentable.flatMap(Wrapped.init(from:))
+    }
+}
+
+extension Array: SKInitializable where Element: SKInitializable {
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        self = try (skRepresentable as! [SourceKitRepresentable]).map(Element.init(from:))
+    }
+}
+
+protocol SKObjectContainer: AnyObject {
+    func load(from object: [String: SourceKitRepresentable]) throws
+}
+
 @propertyWrapper
-struct SKValue<T> {
+final class SKValue<T: SKInitializable>: SKObjectContainer {
     var wrappedValue: T {
         get { 
             guard case let .some(value) = buffer else {
@@ -41,67 +94,9 @@ struct SKValue<T> {
         self.key = key
     }
 
-    mutating func load<Wrapped>(from object: [String: SourceKitRepresentable]) throws where T == Optional<Wrapped>, Wrapped: SourceKitRepresentable {
-        buffer = .some(object[key] as? Wrapped)
+    func load(from object: [String: SourceKitRepresentable]) throws {
+        buffer = try .some(T.init(from: object[key]))
     }
 
-    mutating func load(from object: [String: SourceKitRepresentable]) throws where T: SourceKitRepresentable {
-        guard let value = object[key] as? T else {
-            throw SourceKitError.valueMissingOrMismatch(forKey: key)
-        }
-        buffer = .some(value)
-    }
 }
 
-@propertyWrapper
-struct SKArray<T> {
-    var wrappedValue: T {
-        get { 
-            guard case let .some(value) = buffer else {
-                fatalError("SKValue key: \(key) was not initialized")
-            }
-            return value
-        }
-        set { 
-            buffer = .some(newValue)
-        }
-    }
-
-    private var key: String
-    private var buffer: Optional<T> = nil
-
-    init(key: String, wrappedValue: T) {
-        self.key = key
-        self.buffer = .some(wrappedValue)
-    }
-
-    init(key: String) {
-        self.key = key
-    }
-
-    mutating func load<Element>(from object: [String: SourceKitRepresentable]) throws where T == Array<Element>, Element: SKInitializable {
-        guard let value = object[key] as? Array<SourceKitRepresentable> else {
-            throw SourceKitError.valueMissingOrMismatch(forKey: key)
-        }
-        buffer = try .some(value.map(Element.init(from:)))
-    }
-
-    mutating func load<Element>(from object: [String: SourceKitRepresentable]) throws where T == Optional<Array<Element>>, Element: SKInitializable {
-        let value = object[key] as? Array<SourceKitRepresentable>
-        guard value != nil || object[key] == nil else {
-            throw SourceKitError.valueMissingOrMismatch(forKey: key)
-        }
-        buffer = try .some(value.flatMap { try $0.map(Element.init(from:))} )
-    }
-
-    mutating func load<Element>(from object: [String: SourceKitRepresentable]) throws where T == Array<Element>, Element: SourceKitRepresentable {
-        guard let value = object[key] as? Array<Element> else {
-            throw SourceKitError.valueMissingOrMismatch(forKey: key)
-        }
-        buffer = .some(value)
-    }
-
-    mutating func load<Element>(from object: [String: SourceKitRepresentable]) throws where T == Optional<Array<Element>>, Element: SourceKitRepresentable {
-        buffer = .some(object[key] as? Array<Element>)
-    }
-}
