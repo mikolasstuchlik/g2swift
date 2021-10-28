@@ -13,7 +13,7 @@ public enum Foo {
         for item in PropertyScanner.responses {
             all.merge(item)
         }
-        print(all.pretty)
+        print(all.modelDeclaration)
         #endif
     }
 }

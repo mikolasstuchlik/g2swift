@@ -18,6 +18,12 @@ struct PropertyScanner {
         }
     }
 
+    struct EmmitableProperty: Hashable {
+        let name: String
+        let key: String
+        let type: String
+    }
+
     private static func objectName(_ name: String, isArray: Bool = false) -> String { 
         if isArray {
             return "[Obj<\(name)>]"
@@ -70,6 +76,46 @@ struct PropertyScanner {
     var keys = [String: Set<Property>]()
     var nonOpt = [String: Set<Property>]()
 
+    private func getEmmitable() -> [String: Set<EmmitableProperty>] {
+        var result = [String: Set<EmmitableProperty>]()
+        for (objectName, properties) in keys {
+            let (rootName, isRoot) = objectName.renameRoot(to: "Root")
+            let (candidateName, isObject) = rootName.dropObjectDecorator()
+
+            let canonicalName = candidateName.typeName
+
+            assert(isRoot || isObject)
+
+            var canonicalProperties = Set<EmmitableProperty>()
+            for property in properties {
+                let canonicalPropertyName = property.name.propertyName
+                let (arrayLessName, isArray) = property.type.dropArrayDecorator()
+                let (objectLessName, _) = arrayLessName.dropObjectDecorator()
+
+                let isOptional = nonOpt[objectName]?.first { $0 == property } == nil 
+
+                let typeName = objectLessName.typeName
+                let arrayDecoratedName = isArray
+                    ? "[\(typeName)]"
+                    : typeName
+
+                let canonicalType = isOptional
+                    ? arrayDecoratedName + "?"
+                    : arrayDecoratedName 
+
+                canonicalProperties.insert(EmmitableProperty(
+                    name: canonicalPropertyName, 
+                    key: property.name, 
+                    type: canonicalType
+                ))
+            }
+
+            result[canonicalName] = canonicalProperties
+        }
+
+        return result
+    }
+
     var pretty: String {
         var output = ""
         output += "PrettyScanner(" + "\n"
@@ -94,6 +140,73 @@ struct PropertyScanner {
 
         output += ")"
         return output
+    }
+
+    var modelDeclaration: String {
+        let emmitable = getEmmitable()
+        var output = ""
+
+        for (typeName, properties) in emmitable {
+            output += "struct \(typeName): SKObject {\n"
+            output += "\n"
+            for property in properties {
+                output += #"    @SKValue(key: "\#(property.key)") var \#(property.name): \#(property.type)\#n"#
+            }
+            output += "\n"
+            output += "    init(from skRepresentable: SourceKitRepresentable?) throws {\n"
+            output += "        try self.load(from: skRepresentable!)\n"
+            output += "    }\n"
+            output += "\n"
+            output += "}\n"
+            output += "\n"
+            output += "\n"
+        }
+
+        return output
+    }
+}
+
+private extension String {
+    var parsingKey: String { self }
+
+    private var pascalCalse: String {
+        self.components(separatedBy: ".")
+            .last!
+            .components(separatedBy: "_")
+            .map(\.capitalized)
+            .joined()
+    }
+
+    var typeName: String {
+        pascalCalse
+    }
+
+    var propertyName: String {
+        pascalCalse.first!.lowercased() + pascalCalse.dropFirst()
+    }
+
+    func dropObjectDecorator() -> (result: String, isObject: Bool) {
+        guard hasPrefix("Obj<"), hasSuffix(">") else {
+            return (self, false)
+        }
+
+        return (String(self.dropFirst(4).dropLast(1)), true)
+    }
+
+    func dropArrayDecorator() -> (result: String, isArray: Bool) {
+        guard hasPrefix("["), hasSuffix("]") else {
+            return (self, false)
+        }
+
+        return (String(self.dropFirst().dropLast()), true)
+    }
+
+    func renameRoot(to rootName: String) -> (result: String, isRoot: Bool) {
+        guard self == "<root>" else {
+            return (self, false)
+        }
+
+        return (rootName, true)
     }
 }
 

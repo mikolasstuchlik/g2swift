@@ -1,54 +1,44 @@
 import SourceKittenFramework
 import Foundation
 
-// MARK: - Representation
-// reference: https://github.com/apple/swift/blob/main/tools/SourceKit/docs/Protocol.md#response-2
+//
+// This file was autgenerated using -DDIAGNOSTICS and Root type was modified
+// Passing platform: Ubuntu 20.04
+//
+struct Attributes: SKObject {
 
-struct Annotation: SKObject {
-
-    /// UID for the declaration kind (function, class, etc.).
+    @SKValue(key: "key.is_unavailable") var isUnavailable: Int64?
+    @SKValue(key: "key.message") var message: String?
+    @SKValue(key: "key.obsoleted") var obsoleted: String?
+    @SKValue(key: "key.introduced") var introduced: String?
+    @SKValue(key: "key.is_deprecated") var isDeprecated: Int64?
     @SKValue(key: "key.kind") var kind: String
-    /// Location of the annotated token.
-    @SKValue(key: "key.offset") var offset: Int64
-    /// Length of the annotated token.
-    @SKValue(key: "key.length") var length: Int64
-
-    @SKValue(key: "key.usr") var usr: String?
-    @SKValue(key: "key.name") var name: String?
+    @SKValue(key: "key.deprecated") var deprecated: String?
+    @SKValue(key: "key.platform") var platform: String?
 
     init(from skRepresentable: SourceKitRepresentable?) throws {
         try self.load(from: skRepresentable!)
     }
+
 }
 
-struct Entity: SKObject {
-    /// UID for the declaration or reference kind (function, class, etc.).
-    @SKValue(key: "key.kind") var kind: String
-    /// Displayed name for the entity.
-    @SKValue(key: "key.name") var name: String?
-    /// USR string for the entity.
-    @SKValue(key: "key.usr") var usr: String?
-    /// Location of the entity.
-    @SKValue(key: "key.offset") var offset: Int64
-    /// Length of the entity.
-    @SKValue(key: "key.length") var length: Int64
-    /// XML representing the entity, its USR, etc.
-    @SKValue(key: "key.fully_annotated_decl") var fulltAnnotatedDeclaration: String?
-    /// XML representing the entity and its documentation. Only present
-    /// when the entity is documented.
-    @SKValue(key: "key.doc.full_as_xml") var docAsXml: String?
-    /// One or more entities contained in the particular entity (sub-classes, references, etc.).
-    @SKValue(key: "key.entities") var entities: [Entity]?
+
+struct GenericRequirements: SKObject {
+
+    @SKValue(key: "key.description") var description: String
 
     init(from skRepresentable: SourceKitRepresentable?) throws {
         try self.load(from: skRepresentable!)
     }
+
 }
 
+// Root
 final class ModuleResponse: SKObject {
 
-    @SKValue(key: "key.annotations") var annotations: [Annotation]
-    @SKValue(key: "key.entities") var entities: [Entity]
+    @SKValue(key: "key.annotations") var annotations: [Annotations]
+    //@SKValue(key: "key.sourcetext") var sourcetext: String
+    @SKValue(key: "key.entities") var entities: [Entities]
 
     init(from skRepresentable: SourceKitRepresentable?) throws {
         var aSelf = self
@@ -57,6 +47,102 @@ final class ModuleResponse: SKObject {
         #if DIAGNOSTIC
         PropertyScanner.responses.append(PropertyScanner.initialize(from: skRepresentable as! [String: SourceKitRepresentable]))
         #endif
+    }
+
+}
+
+
+struct Inherits: SKObject {
+
+    @SKValue(key: "key.kind") var kind: String
+    @SKValue(key: "key.usr") var usr: String
+    @SKValue(key: "key.is_deprecated") var isDeprecated: Int64?
+    @SKValue(key: "key.name") var name: String
+
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        try self.load(from: skRepresentable!)
+    }
+
+}
+
+
+struct Annotations: SKObject {
+
+    @SKValue(key: "key.offset") var offset: Int64
+    @SKValue(key: "key.length") var length: Int64
+    @SKValue(key: "key.name") var name: String?
+    @SKValue(key: "key.kind") var kind: String
+    @SKValue(key: "key.usr") var usr: String?
+
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        try self.load(from: skRepresentable!)
+    }
+
+}
+
+
+struct Extends: SKObject {
+
+    @SKValue(key: "key.usr") var usr: String
+    @SKValue(key: "key.is_deprecated") var isDeprecated: Int64?
+    @SKValue(key: "key.name") var name: String
+    @SKValue(key: "key.kind") var kind: String
+
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        try self.load(from: skRepresentable!)
+    }
+
+}
+
+
+struct GenericParams: SKObject {
+
+    @SKValue(key: "key.name") var name: String
+
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        try self.load(from: skRepresentable!)
+    }
+
+}
+
+
+struct Conforms: SKObject {
+
+    @SKValue(key: "key.kind") var kind: String
+    @SKValue(key: "key.name") var name: String
+    @SKValue(key: "key.usr") var usr: String
+
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        try self.load(from: skRepresentable!)
+    }
+
+}
+
+
+struct Entities: SKObject {
+
+    @SKValue(key: "key.doc.full_as_xml") var fullAsXml: String?
+    @SKValue(key: "key.kind") var kind: String
+    @SKValue(key: "key.is_deprecated") var isDeprecated: Int64?
+    @SKValue(key: "key.extends") var extends: Extends?
+    @SKValue(key: "key.generic_params") var genericParams: [GenericParams]?
+    @SKValue(key: "key.attributes") var attributes: [Attributes]?
+    @SKValue(key: "key.generic_requirements") var genericRequirements: [GenericRequirements]?
+    @SKValue(key: "key.default_implementation_of") var defaultImplementationOf: String?
+    @SKValue(key: "key.original_usr") var originalUsr: String?
+    @SKValue(key: "key.conforms") var conforms: [Conforms]?
+    @SKValue(key: "key.offset") var offset: Int64
+    @SKValue(key: "key.name") var name: String?
+    @SKValue(key: "key.length") var length: Int64
+    @SKValue(key: "key.is_unavailable") var isUnavailable: Int64?
+    @SKValue(key: "key.entities") var entities: [Entities]?
+    @SKValue(key: "key.inherits") var inherits: [Inherits]?
+    @SKValue(key: "key.fully_annotated_decl") var fullyAnnotatedDecl: String?
+    @SKValue(key: "key.keyword") var keyword: String?
+    @SKValue(key: "key.usr") var usr: String?
+
+    init(from skRepresentable: SourceKitRepresentable?) throws {
+        try self.load(from: skRepresentable!)
     }
 
 }
