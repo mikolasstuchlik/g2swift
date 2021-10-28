@@ -23,8 +23,8 @@ struct Annotation: SKInitializable {
         try _kind.get(from: object)
         try _offset.get(from: object)
         try _length.get(from: object)
-        try _usr.getOptional(from: object)
-        try _usr.getOptional(from: object)
+        try _usr.get(from: object)
+        try _usr.get(from: object)
     }
 }
 
@@ -52,13 +52,13 @@ struct Entity: SKInitializable {
             throw SourceKitError.valueMissingOrNotAnObject
         }
         try _kind.get(from: object)
-        try _name.getOptional(from: object)
-        try _usr.getOptional(from: object)
+        try _name.get(from: object)
+        try _usr.get(from: object)
         try _offset.get(from: object)
         try _length.get(from: object)
-        try _fulltAnnotatedDeclaration.getOptional(from: object)
-        try _docAsXml.getOptional(from: object)
-        try _entities.getOptional(from: object)
+        try _fulltAnnotatedDeclaration.get(from: object)
+        try _docAsXml.get(from: object)
+        try _entities.get(from: object)
     }
 }
 
