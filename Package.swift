@@ -9,10 +9,20 @@ let package = Package(
         .library(name: "libg2swift", targets: ["libg2swift"])
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-argument-parser", from: "0.4.0")
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0"),
+        .package(url: "https://github.com/jpsim/SourceKitten", .branch("master")),
+
     ],
     targets: [
-        .target(name: "libg2swift"),
+        .target(
+            name: "libg2swift",
+            dependencies: [
+                .product(name: "SourceKittenFramework", package: "SourceKitten")
+            ],
+            swiftSettings: [
+                .define("DIAGNOSTIC")
+            ]
+        ),
         .executableTarget(
             name: "g2swift",
             dependencies: [
