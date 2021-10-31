@@ -1,15 +1,8 @@
 import SourceKittenFramework
 import Foundation
 
-final class SourceKitDriver {
-    enum Source: String { 
-        case foundation = "Foundation"
-        case swift = "Swift"
-        case glibc = "Glibc"
-        case darwin = "Darwin" 
-    }
-
-    static func request(for source: Source) throws -> ModuleResponse {
+public final class SourceKitDriver {
+    public static func request(for module: String, path: String?) throws -> ModuleResponse {
         var arguments: [String] = []
 
         #if os(macOS)
@@ -27,8 +20,12 @@ final class SourceKitDriver {
         ]
         #endif
 
-        return try ModuleResponse(from: 
-            try SourceKittenFramework.Request.moduleInfo(module: source.rawValue, arguments: arguments).send()
-        )
+        let result = try SourceKittenFramework.Request.moduleInfo(module: module, arguments: arguments).send()
+
+        #if DIAGNOSTIC
+        PropertyScanner.responses.append(PropertyScanner.initialize(from: result))
+        #endif
+
+        return try ModuleResponse(from: result)
     }
 }

@@ -73,9 +73,9 @@ private func createProcess(
     command: String,
     in path: [String] = ProcessInfo.processInfo.environmentPaths ?? [],
     arguments: [String] = [],
-    standardInput: Any = stdin,
-    standardOutput: Any = stdout,
-    standardError: Any = stderr,
+    standardInput: Any = stdin!,
+    standardOutput: Any = stdout!,
+    standardError: Any = stderr!,
     fallbackToEnv: Bool
 ) throws -> Process {
     var arguments = arguments

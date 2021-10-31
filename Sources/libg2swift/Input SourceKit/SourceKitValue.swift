@@ -6,11 +6,13 @@ enum SourceKitError: Error {
     case valueMissingOrNotAnObject
 }
 
-protocol SKInitializable {
+public protocol SKInitializable {
     init(from skRepresentable: SourceKitRepresentable?) throws
 }
 
-protocol SKObject: SKInitializable { }
+protocol SKObject: SKInitializable { 
+    init()
+}
 extension SKObject {
     mutating func load(from skRepresentable: SourceKitRepresentable) throws {
         guard let object = skRepresentable as? [String: SourceKitRepresentable] else {
@@ -21,45 +23,51 @@ extension SKObject {
             try (child.value as? SKObjectContainer)?.load(from: object)
         }
     }
+
+    public init(from skRepresentable: SourceKitRepresentable?) throws {
+        var aSelf = Self.init()
+        try aSelf.load(from: skRepresentable!)
+        self = aSelf
+    }
 }
 
 extension String: SKInitializable {
-    init(from skRepresentable: SourceKitRepresentable?) throws {
+    public init(from skRepresentable: SourceKitRepresentable?) throws {
         self = skRepresentable as! String
     }
 }
 
 extension Int64: SKInitializable {
-    init(from skRepresentable: SourceKitRepresentable?) throws {
+    public init(from skRepresentable: SourceKitRepresentable?) throws {
         self = skRepresentable as! Int64
     }
 }
 
 extension Int: SKInitializable {
-    init(from skRepresentable: SourceKitRepresentable?) throws {
+    public init(from skRepresentable: SourceKitRepresentable?) throws {
         self = Int(skRepresentable as! Int64)
     }
 }
 
 extension Bool: SKInitializable {
-    init(from skRepresentable: SourceKitRepresentable?) throws {
+    public init(from skRepresentable: SourceKitRepresentable?) throws {
         self = skRepresentable as! Bool
     }
 }
 
 extension Data: SKInitializable {
-    init(from skRepresentable: SourceKitRepresentable?) throws {
+    public init(from skRepresentable: SourceKitRepresentable?) throws {
         self = skRepresentable as! Data
     }
 }
 extension Optional: SKInitializable where Wrapped: SKInitializable {
-    init(from skRepresentable: SourceKitRepresentable?) throws {
+    public init(from skRepresentable: SourceKitRepresentable?) throws {
         self = try skRepresentable.flatMap(Wrapped.init(from:))
     }
 }
 
 extension Array: SKInitializable where Element: SKInitializable {
-    init(from skRepresentable: SourceKitRepresentable?) throws {
+    public init(from skRepresentable: SourceKitRepresentable?) throws {
         self = try (skRepresentable as! [SourceKitRepresentable]).map(Element.init(from:))
     }
 }
@@ -69,8 +77,8 @@ protocol SKObjectContainer: AnyObject {
 }
 
 @propertyWrapper
-final class SKValue<T: SKInitializable>: SKObjectContainer {
-    var wrappedValue: T {
+public final class SKValue<T: SKInitializable>: SKObjectContainer {
+    public var wrappedValue: T {
         get { 
             guard case let .some(value) = buffer else {
                 fatalError("SKValue key: \(key) was not initialized")
