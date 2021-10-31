@@ -1,9 +1,9 @@
 #if DIAGNOSTIC
 import SourceKittenFramework
 
-struct PropertyScanner {
+public struct PropertyScanner {
 
-    static var responses = [PropertyScanner]()
+    public static var responses = [PropertyScanner]()
     struct Property: Hashable {
         let name: String
         let type: String
@@ -32,7 +32,9 @@ struct PropertyScanner {
         }
     }
 
-    static func initialize(from object: [String: SourceKitRepresentable], name: String = "<root>") -> PropertyScanner {
+    public init() {}
+
+    public static func initialize(from object: [String: SourceKitRepresentable], name: String = "<root>") -> PropertyScanner {
         var output = PropertyScanner()
 
         var objects = [PropertyScanner]()
@@ -68,7 +70,7 @@ struct PropertyScanner {
         return output
     }
 
-    mutating func merge(_ other: PropertyScanner) {
+    public mutating func merge(_ other: PropertyScanner) {
         keys.merge(other.keys) { $0.union($1) }
         nonOpt.merge(other.nonOpt) { $0.intersection($1) }
     }
@@ -116,7 +118,7 @@ struct PropertyScanner {
         return result
     }
 
-    var pretty: String {
+    public var pretty: String {
         var output = ""
         output += "PrettyScanner(" + "\n"
 
@@ -142,20 +144,16 @@ struct PropertyScanner {
         return output
     }
 
-    var modelDeclaration: String {
+    public var modelDeclaration: String {
         let emmitable = getEmmitable()
         var output = ""
 
         for (typeName, properties) in emmitable {
-            output += "struct \(typeName): SKObject {\n"
+            output += "public struct \(typeName): SKObject {\n"
             output += "\n"
             for property in properties {
                 output += #"    @SKValue(key: "\#(property.key)") var \#(property.name): \#(property.type)\#n"#
             }
-            output += "\n"
-            output += "    init(from skRepresentable: SourceKitRepresentable?) throws {\n"
-            output += "        try self.load(from: skRepresentable!)\n"
-            output += "    }\n"
             output += "\n"
             output += "}\n"
             output += "\n"
