@@ -11,7 +11,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0"),
         .package(url: "https://github.com/jpsim/SourceKitten", .branch("master")),
-
+        .package(url: "https://github.com/palle-k/Covfefe.git", .branch("develop"))
     ],
     targets: [
         .target(
@@ -27,7 +27,8 @@ let package = Package(
             name: "g2swift",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                "libg2swift"
+                "libg2swift",
+                "Covfefe"
             ]
         )
     ]
