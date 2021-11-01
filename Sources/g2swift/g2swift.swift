@@ -32,6 +32,9 @@ struct G2Swift: ParsableCommand {
     var generateModuleDefinition: Bool = false
     #endif
 
+    @Option(help: "Required in `grammar` mode. Path to the gir .rnc file.")
+    var rncPath: String?
+
     mutating func run() throws {
         guard let selectedMode = Modes(rawValue: mode) else {
             throw G2SwiftError.generic("Invalid mode: \(mode)")
@@ -49,7 +52,11 @@ struct G2Swift: ParsableCommand {
 
             SourceKitMode.loadModule(name: moduleName, path: modulePath, sourceKitKind: sourceKitKind)
         case .grammar:
-            throw G2SwiftError.notImplemented
+            guard let rncPath = rncPath else {
+                throw G2SwiftError.generic("Mode \(mode) requires argument rncPath")
+            }
+
+            GrammarMode.parseRnc(file: rncPath)
         }
     }
 }

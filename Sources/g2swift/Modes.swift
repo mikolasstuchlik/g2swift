@@ -1,4 +1,5 @@
 import libg2swift
+import Foundation
 
 enum SourceKitMode { 
     #if DIAGNOSTIC
@@ -36,5 +37,23 @@ enum SourceKitMode {
 
         var entities: [Entities]? = response.entities 
         printRecursive(element: &entities, kind: sourceKitKind)
+    }
+}
+
+enum GrammarMode {
+    private static func executePreprocessor(on file: String) -> (processed: String, tokens: [String:String]) {
+        let (tokenized, tokens) = Preprocessor.replaceDocumentationByTokens(file)
+        return (
+            Preprocessor.replaceWhitespacesBySpaces(
+                Preprocessor.dropInitialNamespaceDeclarationsLines(tokenized)
+            ),
+            tokens
+        )
+    }
+
+    static func parseRnc(file path: String) {
+        let file = try! String.init(contentsOf: URL(fileURLWithPath: path))
+        let (preprocessorOutput, tokens) = executePreprocessor(on: file)
+        try! RNCTokenizer.tokenize(preprocessorOutput)
     }
 }

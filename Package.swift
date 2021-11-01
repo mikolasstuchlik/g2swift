@@ -9,7 +9,7 @@ let package = Package(
         .library(name: "libg2swift", targets: ["libg2swift"])
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0"),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.0"),
         .package(url: "https://github.com/jpsim/SourceKitten", .branch("master")),
         .package(url: "https://github.com/palle-k/Covfefe.git", .branch("develop"))
     ],
