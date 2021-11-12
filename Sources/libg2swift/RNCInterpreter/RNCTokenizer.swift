@@ -2,87 +2,96 @@ import Foundation
 import Covfefe
 
 public enum RNCTokenizer {
-    public static func tokenize(_ string: String) throws {
-
-        // RESPECT trailing spaces!!!!
+    public static func tokenize(_ string: String) throws -> ParseTree {
         let grammar = Grammar(start: "grammar") {
-            "grammar"           --> t("grammar { ") <+> n("grammar.content") <+> t("}")
+            "grammar"           --> t("grammar {") <+> n("ws.opt") <+> n("grammar.content") <+> n("ws.opt") <+> t("}") <+> n("ws.opt")
 
-            "grammar.content"   --> n("word") <+> n("grammar.content")
+            "grammar.content"   --> n("grammar.content") <+> n("grammar.content")
+                                <|> n("start.decl") 
+                                <|> n("alias.decl")
                                 <|> t()
 
-            "word"              --> n("string") <+> t(" ")
-            "string"            --> t(.illegalCharacters.inverted.subtracting(.whitespacesAndNewlines)) <+> n("string")
+            // Start
+            "start.decl"        --> t("start") <+> n("ws.opt") <+> t("=") <+> n("ws.opt") <+> n("start.value") <+> n("ws.opt")
+            "start.value"       --> n("word")
+
+            // Alias
+            "alias.decl"        --> n("doc.token.opt") <+> n("ws.opt") <+> n("word.capitalized") <+> n("ws.opt") <+> t("=") <+> n("ws.opt") <+> n("alias.content") <+> n("ws.opt")
+            "alias.content"     --> n("attr.decl")
+                                <|> n("element.decl") 
+                                <|> n("child.brack")
+                                <|> n("attr.col.decl")
+
+            // Element
+            "element.decl"      --> n("doc.token.opt") <+> n("ws.opt") <+> t("element") <+> n("ws.opt") <+> n("word") <+> n("ws.opt") 
+            <+> t("{") <+> n("ws.opt") 
+            <+> n("attrs.list.opt") <+> n("ws.opt") 
+            <+> n("child.expr.opt") <+> n("ws.opt") 
+            <+> t("}") <+> n("ws.opt")
+
+            "child.expr.opt"    --> n("child.expr")
                                 <|> t()
+            "child.expr"        --> n("child.bin") <+> n("ws.opt")
+                                <|> n("doc.token.opt") <+> n("ws.opt") <+> n("child.brack") <+> n("ws.opt")
+                                <|> n("child.unary") <+> n("ws.opt")
+                                <|> n("doc.token.opt") <+> n("ws.opt") <+> n("child.value") <+> n("ws.opt")
+                                <|> n("doc.token.opt") <+> n("ws.opt") <+> t("empty")
+                                <|> n("doc.token.opt") <+> n("ws.opt") <+> t("text")
+                                <|> n("doc.token.opt") <+> n("ws.opt") <+> n("element.decl") 
+            "child.bin"         --> n("child.expr") <+> n("ws.opt") <+> n("doc.token.opt") <+> n("ws.opt") <+> n("child.bin.o") <+> n("ws.opt") <+> n("child.expr")
+            "child.bin.o"       --> t("&")
+                                <|> t("|")
+            "child.unary"       --> n("child.expr") <+> n("child.unary.o") <+> n("ws.opt")
+            "child.unary.o"     --> t("*")
+                                <|> t("?")
+            "child.brack"       --> t("(") <+> n("ws.opt") <+> n("child.expr") <+> n("ws.opt") <+> t(")") <+> n("ws.opt")
+            "child.value"       --> n("word.capitalized") <+> n("ws.opt")
+
+            // Attribute
+            "attrs.list.opt"    --> n("attrs.list")
+                                <|> t()
+            "attrs.list"        --> n("attrs.list") <+> n("attrs.list")
+                                <|> n("attr.decl") <+> n("delim.opt") <+> n("ws.opt")
+
+            "attr.decl"         --> n("doc.token.opt") <+> n("ws.opt") <+> t("attribute") <+> n("ws.opt") <+> n("word") <+> n("ws.opt") <+> t("{") <+> n("ws.opt") <+> n("attr.content") <+> n("ws.opt") <+> t("}") <+> n("ws.opt") <+> n("attr.is.opt") <+> n("ws.opt")
+                                <|> n("doc.token.opt") <+> n("ws.opt") <+> n("word.capitalized") <+> n("ws.opt") <+> n("attr.is.opt") <+> n("ws.opt")
+
+            "attr.is.opt"       --> t("?")
+                                <|> t()
+            "attr.content"      --> n("word")
+                                <|> n("attr.options")
+            "attr.options"      --> n("attr.options") <+> n("ws.opt") <+> t("|") <+> n("ws.opt") <+> n("attr.option")  <+> n("ws.opt")
+                                <|> n("attr.option")
+            "attr.option"       --> t("\"") <+> n("word") <+> t("\"") 
+
+            // Attribute collection
+            "attr.col.decl"     --> n("doc.token.opt") <+> n("ws.opt") <+> t("(") <+> n("ws.opt") <+> n("attrs.list") <+> n("ws.opt") <+> t(")") <+> n("ws.opt")
+
+            // Doc tokens
+            "doc.token.opt"     --> n("doc.token") <+> n("ws.opt") <+> n("doc.token.opt")
+                                <|> t()
+            "doc.token"         --> t("<") <+> n("word") <+> t(">")
+
+            // Basics
+            "word.capitalized"  --> t(.uppercaseLetters) <+> n("word")
+            "word"              --> n("string")
+            
+            "string"            --> n("string") <+> n("char")
+                                <|> n("char")
+            "char"              --> t(.illegalCharacters
+                                        .inverted
+                                        .subtracting(.whitespacesAndNewlines)
+                                        .subtracting(CharacterSet(charactersIn: "\"{}()<>?*|&,="))
+                                    )
+            
+            "delim.opt"         --> t(",") <|> t()
+
+            "ws.opt"            --> n("ws")
+                                <|> t()
+            "ws"                --> t(.whitespacesAndNewlines)
         }
 
         let parser = EarleyParser(grammar: grammar)
-
-        let syntaxTree = try parser.syntaxTree(for: string)
-
-        let words: [String] = syntaxTree.reduce([]) { current, accumulator in
-            if case let .node(key: node, children: _) =  current, node.name == "word" {
-                let leafs = current.stackLeafs
-                let word = string[leafs.first!.lowerBound..<leafs.last!.upperBound]
-                accumulator.append(String(word))
-                return false
-            }
-
-            return true
-        }
-
-        print(words)
-    }
-}
-
-extension SyntaxTree {
-    
-    private enum ReduceStackFrame {
-        case children([SyntaxTree], index: Int)
-    }
-
-    func reduce<T>(_ initial: T, nextContinueSubtree: (_ currentItem: SyntaxTree, _ result: inout T) -> Bool ) -> T {
-        var stack = [ReduceStackFrame]()
-        var accumulator = initial
-
-        func appendNew(_ tree: SyntaxTree) {
-            if 
-                nextContinueSubtree(tree, &accumulator),
-                case .node(key: _, children: let children) = tree 
-            {
-                stack.append(.children(children, index: 0))
-            }
-        }
-
-        func resolve(_ children: [SyntaxTree], iteratedIndex: Int) {
-            guard children.count > iteratedIndex else {
-                return
-            } 
-
-            stack.append(.children(children, index: iteratedIndex + 1))
-            appendNew(children[iteratedIndex])
-        }
-
-        appendNew(self)
-        while let currentFrame = stack.popLast() {
-            switch currentFrame {
-            case let .children(children, index: index):
-                resolve(children, iteratedIndex: index)
-            }
-        }
-	
-        return accumulator
-    }
-
-}
-
-extension SyntaxTree {
-    var stackLeafs: [LeafElement] {
-         self.reduce([]) { current, accumulator in
-            if case let .leaf(leaf) = current {
-                accumulator.append(leaf)
-            }
-            return true
-        }
+        return try parser.syntaxTree(for: string)
     }
 }

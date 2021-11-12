@@ -52,8 +52,9 @@ enum GrammarMode {
     }
 
     static func parseRnc(file path: String) {
-        let file = try! String.init(contentsOf: URL(fileURLWithPath: path))
+        let file = try! String(contentsOf: URL(fileURLWithPath: path))
         let (preprocessorOutput, tokens) = executePreprocessor(on: file)
-        try! RNCTokenizer.tokenize(preprocessorOutput)
+        let tree = try! RNCTokenizer.tokenize(preprocessorOutput)
+        try! RNCSema.produceXmlDescription(using: tree, source: preprocessorOutput, tokens: tokens)
     }
 }
