@@ -55,6 +55,6 @@ enum GrammarMode {
         let file = try! String(contentsOf: URL(fileURLWithPath: path))
         let (preprocessorOutput, tokens) = executePreprocessor(on: file)
         let tree = try! RNCTokenizer.tokenize(preprocessorOutput)
-        try! RNCSema.produceXmlDescription(using: tree, source: preprocessorOutput, tokens: tokens)
+        try! RNCSema(rootTree: tree, source: preprocessorOutput, tokens: tokens).produceXmlDescription()
     }
 }
