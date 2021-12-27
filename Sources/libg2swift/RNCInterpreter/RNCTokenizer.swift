@@ -16,18 +16,21 @@ public enum RNCTokenizer {
             "start.value"       --> n("word")
 
             // Alias
-            "alias.decl"        --> n("doc.token.opt") <+> n("ws.opt") <+> n("word.capitalized") <+> n("ws.opt") <+> t("=") <+> n("ws.opt") <+> n("alias.content") <+> n("ws.opt")
+            "alias.decl"        --> n("alias.decl.doc.op") <+> n("ws.opt") <+> n("alias.decl.name") <+> n("ws.opt") <+> t("=") <+> n("ws.opt") <+> n("alias.content") <+> n("ws.opt")
+            "alias.decl.name"   --> n("word.capitalized")
+            "alias.decl.doc.op" --> n("doc.token.opt")
             "alias.content"     --> n("attr.decl")
                                 <|> n("element.decl") 
                                 <|> n("child.brack")
                                 <|> n("attr.col.decl")
 
             // Element
-            "element.decl"      --> n("doc.token.opt") <+> n("ws.opt") <+> t("element") <+> n("ws.opt") <+> n("word") <+> n("ws.opt") 
+            "element.decl"      --> n("doc.token.opt") <+> n("ws.opt") <+> t("element") <+> n("ws.opt") <+> n("element.decl.name") <+> n("ws.opt")
             <+> t("{") <+> n("ws.opt") 
             <+> n("attrs.list.opt") <+> n("ws.opt") 
             <+> n("child.expr.opt") <+> n("ws.opt") 
             <+> t("}") <+> n("ws.opt")
+            "element.decl.name" --> n("word")
 
             "child.expr.opt"    --> n("child.expr")
                                 <|> t()
@@ -53,16 +56,20 @@ public enum RNCTokenizer {
             "attrs.list"        --> n("attrs.list") <+> n("attrs.list")
                                 <|> n("attr.decl") <+> n("delim.opt") <+> n("ws.opt")
 
-            "attr.decl"         --> n("doc.token.opt") <+> n("ws.opt") <+> t("attribute") <+> n("ws.opt") <+> n("word") <+> n("ws.opt") <+> t("{") <+> n("ws.opt") <+> n("attr.content") <+> n("ws.opt") <+> t("}") <+> n("ws.opt") <+> n("attr.is.opt") <+> n("ws.opt")
-                                <|> n("doc.token.opt") <+> n("ws.opt") <+> n("word.capitalized") <+> n("ws.opt") <+> n("attr.is.opt") <+> n("ws.opt")
+            "attr.decl"         --> n("doc.token.opt") <+> n("ws.opt") <+> t("attribute") <+> n("ws.opt") <+> n("attr.decl.name") <+> n("ws.opt") <+> t("{") <+> n("ws.opt") <+> n("attr.content") <+> n("ws.opt") <+> t("}") <+> n("ws.opt") <+> n("attr.is.opt") <+> n("ws.opt")
+                                <|> n("doc.token.opt") <+> n("ws.opt") <+> n("attr.decl.ref") <+> n("ws.opt") <+> n("attr.is.opt") <+> n("ws.opt")
+            "attr.decl.name"    --> n("word")
+            "attr.decl.ref"     --> n("word.capitalized")
 
             "attr.is.opt"       --> t("?")
                                 <|> t()
-            "attr.content"      --> n("word")
+            "attr.content"      --> n("attr.content.type")
                                 <|> n("attr.options")
+            "attr.content.type" --> n("word")
             "attr.options"      --> n("attr.options") <+> n("ws.opt") <+> t("|") <+> n("ws.opt") <+> n("attr.option")  <+> n("ws.opt")
                                 <|> n("attr.option")
-            "attr.option"       --> t("\"") <+> n("word") <+> t("\"") 
+            "attr.option"       --> t("\"") <+> n("attr.option.name") <+> t("\"")
+            "attr.option.name"  --> n("word")
 
             // Attribute collection
             "attr.col.decl"     --> n("doc.token.opt") <+> n("ws.opt") <+> t("(") <+> n("ws.opt") <+> n("attrs.list") <+> n("ws.opt") <+> t(")") <+> n("ws.opt")
