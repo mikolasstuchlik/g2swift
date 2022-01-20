@@ -79,7 +79,7 @@ public class RNCSema {
             .first { $0.root?.name == "attrs.list.opt" }?
             .allNodes { $0.name == "attr.decl" }
             .compactMap(loadAttribute(node:))
-        let childEmenets = node.children?.first { $0.root?.name == "child.expr.opt" }.flatMap(loadChildElements(node:))
+        let childEmenets = node.children?.first { $0.root?.name == "child.expr.opt" }.flatMap { loadChildElements(node: $0, elementName: String(name)) }
 
         let element = XmlElement(
             name: String(name),
@@ -91,7 +91,7 @@ public class RNCSema {
     }
 
     func loadChildBracketTopLevelDecl(alias: XmlAlias, node: ParseTree) {
-        guard let child = loadChildElements(node: node) else {
+        guard let child = loadChildElements(node: node, elementName: "<none>") else {
             assertionFailure("Failed to load element declaration for alias \(alias)")
             return
         }
@@ -106,7 +106,57 @@ public class RNCSema {
         namedAttributes[alias] = attributes
     }
 
-    func loadChildElements(node: ParseTree) -> XmlChildElement? {
+    func loadChildElements(node: ParseTree, elementName: String) -> XmlChildElement? {
+        return solveChildElementsRecursively(for: node, elementScope: elementName)
+    }
+
+    func solveChildElementsRecursively(for node: ParseTree, elementScope: String = "") -> XmlChildElement? {
+        let doc = node.children?.first(where: { $0.root?.name == "doc.token.opt"}).flatMap(loadDoc(from:))
+
+        guard let lastChild = node.children?.last else {
+            return nil
+        }
+
+        switch lastChild.root?.name {
+        case "child.bin": break
+        case "child.brack": break
+        case "child.unary":
+            guard
+                let declaration = lastChild.children?.first(where: { $0.root?.name == "child.expr" }),
+                let element = solveChildElementsRecursively(for: declaration, elementScope: elementScope)
+            else {
+                assertionFailure("Failed to load element in scope " + elementScope)
+                return nil
+            }
+            let operatorSign = lastChild.children?.first { $0.root?.name == "child.unary.o" }?.realize(from: source)
+            return element.decorate(with: String(operatorSign!), documentation: doc)
+        case "child.value":
+            
+        case "element.decl":
+            guard let elementName = loadAnonymousElement(node: lastChild, elementScope: elementScope) else {
+                assertionFailure("Failed to load element in scope " + elementScope)
+                return nil
+            }
+            return XmlChildElement(type: .exactlyOne(typeName: elementName), documentation: doc)
+        default: break
+        }
+
+        guard lastChild.leaf != nil else {
+            return nil
+        }
+
+        switch lastChild.realize(from: source) {
+        case "text":
+            return XmlChildElement(type: .text, documentation: doc)
+        case "empty":
+            return XmlChildElement(type: .empty, documentation: doc)
+        default: break
+        }
+
+        return nil
+    }
+
+    func loadAnonymousElement(node: ParseTree, elementScope: String) -> String? {
         return nil
     }
 

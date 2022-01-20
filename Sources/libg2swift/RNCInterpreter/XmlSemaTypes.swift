@@ -38,10 +38,27 @@ public struct XmlChildElement {
         case anyNumberOf(typeName: String)
 
         case empty
+        case text
     }
 
     public let type: TypeDefinition
     public let documentation: String?
+
+    func decorate(with operatorSign: String, documentation: String?) -> XmlChildElement {
+        switch type {
+        case .oneOf, .anyOf, .empty, .text:
+            fatalError("Type \(type) cannot be decorated")
+        case .zeroOrOne(typeName: let typeName), .exactlyOne(typeName: let typeName), .anyNumberOf(typeName: let typeName):
+            switch operatorSign {
+            case "*":
+                return XmlChildElement(type: .anyNumberOf(typeName: typeName), documentation: )
+            case "?":
+                return XmlChildElement(type: .zeroOrOne(typeName: typeName), documentation: [self.documentation + documentation].compactMap { $0 }.joined(separator: " ;; "))
+            default:
+                fatalError("Unknown operator " + operatorSign)
+            }
+        }
+    }
 }
 
 // Element
